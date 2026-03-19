@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>优选IP订阅生成器 — CF-Sub</title>
+
+  <!-- SEO Meta -->
+  <meta name="description" content="基于 Cloudflare Workers 的轻量级订阅转换工具，支持 VMess / VLESS / Trojan 协议，一键生成 Clash、Surge、V2rayN 订阅链接">
+  <meta name="keywords" content="订阅转换,Cloudflare Workers,VLESS,VMess,Trojan,Clash订阅,优选IP,订阅生成器">
+  <meta name="robots" content="index, follow">
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="优选IP订阅生成器 — CF-Sub">
+  <meta property="og:description" content="基于 Cloudflare Workers 的轻量级订阅转换工具，支持 VMess / VLESS / Trojan 协议">
+  <meta property="og:type" content="website">
+
+  <!-- Canonical -->
+  <link rel="canonical" href="">
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="/styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js" defer></script>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- ── 顶部广告占位 ── -->
+  <!-- AD_PLACEHOLDER_TOP -->
+
+  <!-- ── Hero ── -->
+  <header class="card hero" role="banner">
+    <div>
+      <h1 class="hero-title">
+        <svg class="hero-logo" viewBox="0 0 48 48" fill="none">
+          <circle cx="24" cy="24" r="22" stroke="currentColor" stroke-width="2" opacity=".3"/>
+          <path d="M14 24l8 8 12-16" stroke="url(#g)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+          <defs><linearGradient id="g" x1="14" y1="16" x2="34" y2="32"><stop stop-color="#60a5fa"/><stop offset="1" stop-color="#34d399"/></linearGradient></defs>
+        </svg>
+        优选IP订阅生成器
+      </h1>
+      <p class="lead">
+        导入自建节点 → 批量替换为优选 IP（可选） → 输出可导入主流客户端的订阅链接。<br>
+        支持 VMess / VLESS / Trojan 的 WS + TLS 常见配置。
+      </p>
+    </div>
+    <div class="hero-note">
+      <div class="eyebrow">📝 支持格式</div>
+      <ul style="padding-left:18px;margin:0;color:var(--muted);line-height:2;">
+        <li><code>IP</code> 或 <code>IP:端口</code></li>
+        <li><code>域名</code> 或 <code>域名:端口</code></li>
+        <li><code># 后面写备注</code></li>
+        <li>留空则纯格式转换</li>
+      </ul>
+    </div>
+  </header>
+
+  <!-- ── 表单 ── -->
+  <form id="generator-form" class="card grid two-col" autocomplete="off">
+    <div class="stack-lg" style="padding:28px;">
+      <div>
+        <label for="nodeLinks">节点链接 <span style="color:var(--danger);">*</span></label>
+        <textarea id="nodeLinks" rows="7" placeholder="粘贴 vmess:// / vless:// / trojan:// 链接，每行一个；也支持 Base64 编码内容" required></textarea>
+        <p class="hint">支持多行粘贴，也支持 Base64 编码的订阅内容</p>
+      </div>
+      <div>
+        <label for="preferredIps">优选地址 <span style="color:var(--muted);font-weight:400;">(可选)</span></label>
+        <textarea id="preferredIps" rows="5" placeholder="每行一个优选 IP / 域名，留空则直接转换格式不替换地址"></textarea>
+        <p class="hint">格式：<code>104.16.1.2#备注</code> 或 <code>cdn.example.com:2053#美国</code>，留空时不替换地址</p>
+      </div>
+    </div>
+    <div class="stack-lg" style="padding:28px;">
+      <div>
+        <label for="namePrefix">节点名称前缀 <span style="color:var(--muted);font-weight:400;">(可选)</span></label>
+        <input type="text" id="namePrefix" placeholder="例如：CF、HK、我的节点">
+      </div>
+      <div class="checkbox-wrap">
+        <input type="checkbox" id="keepOriginalHost" checked>
+        <label for="keepOriginalHost">保留原始 Host / SNI</label>
+      </div>
+      <div class="tips card" style="padding:16px;">
+        <div class="eyebrow">💡 说明</div>
+        <ul>
+          <li>不会帮你查找优选 IP，只负责替换进节点</li>
+          <li>推荐勾选"保留原 Host / SNI"，适合 CDN 场景</li>
+          <li>不填优选地址时，仅做格式转换（不替换服务器地址）</li>
+          <li>订阅链接 7 天后自动过期</li>
+        </ul>
+      </div>
+      <div class="actions">
+        <button type="submit" id="submitBtn">🚀 生成订阅</button>
+        <button type="button" id="fillDemoBtn" class="secondary">📋 填充示例</button>
+      </div>
+    </div>
+  </form>
+
+  <!-- ── 结果区域 ── -->
+  <section id="resultSection" class="card hidden" aria-label="订阅结果">
+    <div class="section-head">
+      <div>
+        <h2 style="margin:0;">📦 订阅结果</h2>
+        <p class="section-desc">选择适合你的客户端格式，复制订阅链接或扫码导入。</p>
+      </div>
+      <div class="counts">
+        <span>输入节点 <strong id="statInputNodes">0</strong></span>
+        <span>优选地址 <strong id="statEndpoints">0</strong></span>
+        <span>输出节点 <strong id="statOutputNodes">0</strong></span>
+      </div>
+    </div>
+
+    <!-- 警告 -->
+    <div id="warningBox" class="warning hidden" role="alert"></div>
+
+    <!-- 订阅卡片网格 -->
+    <div class="sub-grid" style="margin-top:20px;">
+
+      <!-- 自动识别 -->
+      <div class="sub-card">
+        <div class="sub-card-head">
+          <div class="client-meta">
+            <div class="client-icon" style="background:rgba(96,165,250,.15);">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+            </div>
+            <div><h3>自动识别</h3><p>适合支持自动识别的客户端</p></div>
+          </div>
+        </div>
+        <div class="sub-actions">
+          <input type="text" id="autoUrl" readonly placeholder="等待生成...">
+          <button class="small" data-copy-target="autoUrl">复制</button>
+          <button class="small secondary" data-qrcode-target="autoUrl">二维码</button>
+        </div>
+      </div>
+
+      <!-- V2rayN / Raw -->
+      <div class="sub-card">
+        <div class="sub-card-head">
+          <div class="client-meta">
+            <div class="client-icon" style="background:rgba(52,211,153,.15);">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#34d399" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+            </div>
+            <div><h3>V2rayN</h3><p>V2rayN / v2rayNG</p></div>
+          </div>
+        </div>
+        <div class="sub-actions">
+          <input type="text" id="rawUrl" readonly placeholder="等待生成...">
+          <button class="small" data-copy-target="rawUrl">复制</button>
+          <button class="small secondary" data-qrcode-target="rawUrl">二维码</button>
+        </div>
+      </div>
+
+      <!-- Clash -->
+      <div class="sub-card">
+        <div class="sub-card-head">
+          <div class="client-meta">
+            <div class="client-icon" style="background:rgba(244,114,182,.15);">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#f472b6" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+            </div>
+            <div><h3>Clash</h3><p>Clash / Mihomo / Clash Verge</p></div>
+          </div>
+        </div>
+        <div class="sub-actions">
+          <input type="text" id="clashUrl" readonly placeholder="等待生成...">
+          <button class="small" data-copy-target="clashUrl">复制</button>
+          <button class="small secondary" data-qrcode-target="clashUrl">二维码</button>
+        </div>
+      </div>
+
+      <!-- Shadowrocket -->
+      <div class="sub-card">
+        <div class="sub-card-head">
+          <div class="client-meta">
+            <div class="client-icon" style="background:rgba(251,146,60,.15);">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fb923c" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+            </div>
+            <div><h3>Shadowrocket</h3><p>iPhone / iPad 小火箭</p></div>
+          </div>
+        </div>
+        <div class="sub-actions">
+          <input type="text" id="rocketUrl" readonly placeholder="等待生成...">
+          <button class="small" data-copy-target="rocketUrl">复制</button>
+          <button class="small secondary" data-qrcode-target="rocketUrl">二维码</button>
+        </div>
+      </div>
+
+      <!-- Surge -->
+      <div class="sub-card sub-card-wide">
+        <div class="sub-card-head">
+          <div class="client-meta">
+            <div class="client-icon" style="background:rgba(168,85,247,.15);">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#a855f7" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+            </div>
+            <div><h3>Surge</h3><p>Surge Profile（VMess / Trojan）</p></div>
+          </div>
+        </div>
+        <div class="sub-actions">
+          <input type="text" id="surgeUrl" readonly placeholder="等待生成...">
+          <button class="small" data-copy-target="surgeUrl">复制</button>
+          <button class="small secondary" data-qrcode-target="surgeUrl">二维码</button>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- 预览 -->
+    <div class="preview-wrap" style="margin-top:20px;">
+      <h3>📋 预览前 20 个生成节点</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>名称</th><th>协议</th><th>服务器</th><th>端口</th><th>Host</th><th>SNI</th>
+            </tr>
+          </thead>
+          <tbody id="previewBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── 底部广告占位 ── -->
+  <!-- AD_PLACEHOLDER_BOTTOM -->
+
+  <!-- ── Footer ── -->
+  <footer style="text-align:center;padding:32px 0 16px;color:var(--muted);font-size:0.88rem;">
+    <p>CF-Sub — 基于 <a href="https://workers.cloudflare.com" target="_blank" style="color:var(--accent);">Cloudflare Workers</a> 构建</p>
+    <p style="margin-top:6px;opacity:.6;">开源项目 · 仅供学习交流</p>
+  </footer>
+
+</div>
+
+<!-- ── QR 码弹窗 ── -->
+<div id="qrModal" class="modal hidden" aria-hidden="true" role="dialog" aria-label="二维码">
+  <div class="modal-backdrop" data-close-modal="true"></div>
+  <div class="modal-dialog">
+    <div class="modal-head">
+      <h3 style="margin:0;">📱 订阅二维码</h3>
+      <button id="closeQrModal" class="secondary small" aria-label="关闭">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="qr-box" id="qrCanvas"></div>
+      <p class="qr-text" id="qrText"></p>
+    </div>
+  </div>
+</div>
+
+<script src="/app.js"></script>
+</body>
+</html>
