@@ -428,10 +428,14 @@ function injectAdsIntoHtml(html, env) {
   if (siteTitle) {
     html = html.replace(/<title>[^<]*<\/title>/, `<title>${siteTitle}</title>`);
     html = html.replace(/property="og:title"\s+content="[^"]*"/, `property="og:title" content="${siteTitle}"`);
+    // 同时替换网页正文中的 h1 标题
+    html = html.replace(/优选IP订阅生成器<\/h1>/, `${siteTitle}</h1>`);
   }
   if (siteDesc) {
     html = html.replace(/name="description"\s+content="[^"]*"/, `name="description" content="${siteDesc}"`);
     html = html.replace(/property="og:description"\s+content="[^"]*"/, `property="og:description" content="${siteDesc}"`);
+    // 同时替换网页正文中的引导文字
+    html = html.replace(/导入自建节点 → 批量替换为优选 IP（可选） → 输出可导入主流客户端的订阅链接。/, siteDesc);
   }
 
   // 未配置广告则不注入
