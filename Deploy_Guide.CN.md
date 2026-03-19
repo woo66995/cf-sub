@@ -179,13 +179,13 @@ Published cf-sub (x.xx sec)
 5. 在"环境变量"部分点击 **添加**
 6. 添加以下变量（按需）：
 
-| 变量名 | 值 | 用途 |
+| 变量名 | 类型 | 示例值 | 用途 |
 |--------|------|------|
-| `SUB_ACCESS_TOKEN` | 自定义一个密码 | 保护订阅链接，防止被他人使用 |
-| `GOOGLE_ADS_CLIENT` | `ca-pub-xxxxxxxx` | Google AdSense 客户端 ID |
-| `GOOGLE_ADS_SLOT` | `xxxxxxxx` | Google AdSense 广告位 ID |
-| `SITE_TITLE` | 自定义标题 | 覆盖默认标题 |
-| `SITE_DESCRIPTION` | 自定义描述 | 覆盖默认 SEO 描述 |
+| `SUB_ACCESS_TOKEN` | **Secret (机密)** | `mypassword123` | 保护订阅链接，防止被他人使用 |
+| `GOOGLE_ADS_CLIENT` | **Text (文本)** | `ca-pub-xxxxxxxx` | Google AdSense 客户端 ID |
+| `GOOGLE_ADS_SLOT` | **Text (文本)** | `xxxxxxxx` | Google AdSense 广告位 ID |
+| `SITE_TITLE` | **Text (文本)** | `我的倍速转换器` | 覆盖默认站点标题 |
+| `SITE_DESCRIPTION` | **Text (文本)** | `支持各种新协议...` | 覆盖默认 SEO 描述 |
 
 7. 点击 **保存并部署**
 
