@@ -91,15 +91,13 @@ function parseVmess(link) {
 
 function parseUrlLike(link, type) {
   const u = new URL(link);
-  return {
+  const node = {
     type,
     name: decodeURIComponent(u.hash.replace(/^#/, '')) || type,
     server: u.hostname,
     port: Number(u.port || 443),
-    password: type === 'trojan' ? decodeURIComponent(u.username) : undefined,
-    uuid: type === 'vless' ? decodeURIComponent(u.username) : undefined,
-    network: u.searchParams.get('type') || 'tcp',
-    tls: (u.searchParams.get('security') || '').toLowerCase() === 'tls',
+    network: u.searchParams.get('type') || (type === 'tuic' ? 'udp' : 'tcp'),
+    tls: (u.searchParams.get('security') || '').toLowerCase() === 'tls' || type === 'trojan' || type === 'tuic' || type === 'hysteria2',
     host: u.searchParams.get('host') || u.searchParams.get('sni') || '',
     path: u.searchParams.get('path') || '/',
     sni: u.searchParams.get('sni') || u.searchParams.get('host') || '',
@@ -107,6 +105,24 @@ function parseUrlLike(link, type) {
     alpn: u.searchParams.get('alpn') || '',
     flow: u.searchParams.get('flow') || '',
   };
+
+  // 认证信息
+  if (type === 'trojan' || type === 'hysteria2') node.password = decodeURIComponent(u.username);
+  if (type === 'vless') node.uuid = decodeURIComponent(u.username);
+  if (type === 'tuic') {
+    node.uuid = decodeURIComponent(u.username);
+    node.password = decodeURIComponent(u.password);
+  }
+
+  // Hysteria 2 特有
+  if (type === 'hysteria2') {
+    node.up = u.searchParams.get('up') || u.searchParams.get('upload') || '';
+    node.down = u.searchParams.get('down') || u.searchParams.get('download') || '';
+    node.obfs = u.searchParams.get('obfs') || '';
+    node.obfsPassword = u.searchParams.get('obfs-password') || '';
+  }
+
+  return node;
 }
 
 function parseRawLinks(input) {
@@ -121,6 +137,11 @@ function parseRawLinks(input) {
       if (line.startsWith('vmess://')) { result.push(parseVmess(line)); continue; }
       if (line.startsWith('vless://'))  { result.push(parseUrlLike(line, 'vless')); continue; }
       if (line.startsWith('trojan://')) { result.push(parseUrlLike(line, 'trojan')); continue; }
+      if (line.startsWith('tuic://'))   { result.push(parseUrlLike(line, 'tuic')); continue; }
+      if (line.startsWith('hysteria2://') || line.startsWith('hy2://')) {
+        result.push(parseUrlLike(line.replace(/^hy2:\/\//, 'hysteria2://'), 'hysteria2'));
+        continue;
+      }
       // 尝试 base64 解码
       const decoded = b64Decode(line);
       if (/^(vmess|vless|trojan):\/\//m.test(decoded)) {
@@ -210,6 +231,25 @@ function encodeTrojan(node) {
   return url.toString();
 }
 
+function encodeTuic(node) {
+  const url = new URL(`tuic://${encodeURIComponent(node.uuid)}:${encodeURIComponent(node.password || '')}@${node.server}:${node.port}`);
+  if (node.sni) url.searchParams.set('sni', node.sni);
+  if (node.alpn) url.searchParams.set('alpn', node.alpn);
+  url.hash = node.name;
+  return url.toString();
+}
+
+function encodeHysteria2(node) {
+  const url = new URL(`hysteria2://${encodeURIComponent(node.password || '')}@${node.server}:${node.port}`);
+  if (node.up) url.searchParams.set('up', node.up);
+  if (node.down) url.searchParams.set('down', node.down);
+  if (node.sni) url.searchParams.set('sni', node.sni);
+  if (node.obfs) url.searchParams.set('obfs', node.obfs);
+  if (node.obfsPassword) url.searchParams.set('obfs-password', node.obfsPassword);
+  url.hash = node.name;
+  return url.toString();
+}
+
 // ── 订阅格式渲染器 ───────────────────────────────────────────────────
 
 function renderRaw(nodes) {
@@ -217,6 +257,8 @@ function renderRaw(nodes) {
     if (n.type === 'vmess')  return encodeVmess(n);
     if (n.type === 'vless')  return encodeVless(n);
     if (n.type === 'trojan') return encodeTrojan(n);
+    if (n.type === 'tuic')   return encodeTuic(n);
+    if (n.type === 'hysteria2') return encodeHysteria2(n);
     return '';
   }).filter(Boolean);
   return b64Encode(lines.join('\n'));
@@ -275,6 +317,31 @@ function renderClash(nodes) {
         `        Host: "${escapeYaml(node.host || '')}"`,
       ].join('\n');
     }
+
+    if (node.type === 'tuic') {
+      return [
+        ...common,
+        `    type: tuic`,
+        `    uuid: ${node.uuid}`,
+        `    password: ${node.password || ''}`,
+        `    alpn: [${node.alpn || 'h3'}]`,
+        `    udp-relay: true`,
+        `    congestion-controller: bbr`,
+        `    reduce-rtt: true`,
+      ].join('\n');
+    }
+
+    if (node.type === 'hysteria2') {
+      return [
+        ...common,
+        `    type: hysteria2`,
+        `    password: ${node.password || ''}`,
+        `    up: ${node.up || '10mbps'}`,
+        `    down: ${node.down || '50mbps'}`,
+        `    sni: ${node.sni || ''}`,
+        `    skip-cert-verify: false`,
+      ].join('\n');
+    }
     return '';
   }).filter(Boolean);
 
@@ -283,19 +350,28 @@ function renderClash(nodes) {
 
 function renderSurge(nodes, baseUrl, accessToken) {
   const proxies = nodes
-    .filter((n) => n.type === 'vmess' || n.type === 'trojan')
+    .filter((n) => n.type === 'vmess' || n.type === 'trojan' || n.type === 'tuic' || n.type === 'hysteria2')
     .map((node) => {
       if (node.type === 'vmess') {
         return `${node.name} = vmess, ${node.server}, ${node.port}, username=${node.uuid}, ws=true, ws-path=${node.path || '/'}, ws-headers=Host:${node.host || ''}, tls=${node.tls}, sni=${node.sni || ''}`;
       }
-      return `${node.name} = trojan, ${node.server}, ${node.port}, password=${node.password || ''}, sni=${node.sni || ''}`;
+      if (node.type === 'trojan') {
+        return `${node.name} = trojan, ${node.server}, ${node.port}, password=${node.password || ''}, sni=${node.sni || ''}`;
+      }
+      if (node.type === 'tuic') {
+        return `${node.name} = tuic, ${node.server}, ${node.port}, password=${node.password || ''}, user-id=${node.uuid}, alpn=${node.alpn || 'h3'}`;
+      }
+      if (node.type === 'hysteria2') {
+        return `${node.name} = hysteria2, ${node.server}, ${node.port}, password=${node.password || ''}, sni=${node.sni || ''}`;
+      }
+      return '';
     });
 
   return [
     '[General]', 'skip-proxy = 127.0.0.1, localhost', '',
     '[Proxy]', ...proxies, '',
     '[Proxy Group]',
-    'Proxy = select, ' + nodes.filter((n) => n.type === 'vmess' || n.type === 'trojan').map((n) => n.name).join(', '),
+    'Proxy = select, ' + nodes.filter((n) => n.type === 'vmess' || n.type === 'trojan' || n.type === 'tuic' || n.type === 'hysteria2').map((n) => n.name).join(', '),
     '', '[Rule]', 'FINAL,Proxy', '',
     `; ${baseUrl}?token=${accessToken}`,
   ].join('\n');

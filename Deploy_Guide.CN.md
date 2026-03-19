@@ -162,7 +162,7 @@ Published cf-sub (x.xx sec)
   https://cf-sub.你的子域名.workers.dev
 ```
 
-在浏览器中打开这个 URL，就能看到你的订阅转换工具了！
+在浏览器中打开这个 URL，就能看到你的订阅转换工具了！本项目现已完美支持 **VMess、VLESS、Trojan、TUIC v5 和 Hysteria 2** 协议。
 
 ---
 
