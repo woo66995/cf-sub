@@ -412,9 +412,18 @@ button.small {
 
 /* ── Result Section ─────────────────────────────────────────────── */
 
+#resultSection.hidden {
+  display: none !important;
+}
+
 #resultSection {
   padding: 32px;
+  border-radius: 24px;
   margin-top: 32px;
+}
+
+#resultSection:not(.hidden) {
+  display: block;
   animation: fadeSlideIn 0.5s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
