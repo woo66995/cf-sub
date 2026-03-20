@@ -21,7 +21,7 @@
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
 
   <link rel="stylesheet" href="/styles.css">
   <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js" defer></script>
@@ -29,6 +29,15 @@
 <body>
 
 <div class="container">
+  <!-- Controls -->
+  <div class="controls">
+    <button id="langToggle" class="control-btn lang-btn" aria-label="Toggle Language">EN</button>
+    <button id="themeToggle" class="control-btn" aria-label="Toggle Theme">
+      <svg id="themeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path class="sun" d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42m12.72 12.72l1.42 1.42M1 12h2m18 0h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42M17 12a5 5 0 1 1-10 0 5 5 0 0 1 10 0z"/>
+      </svg>
+    </button>
+  </div>
 
   <!-- ── 顶部广告占位 ── -->
   <!-- AD_PLACEHOLDER_TOP -->
@@ -40,10 +49,10 @@
         <svg class="hero-logo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M7 10v4h4" stroke-width="2.5"/><path d="M17 14v-4h-4" stroke-width="2.5"/><path d="M7 14c.5-3.5 3-6 5-6s4.5 2.5 5 6"/><path d="M17 10c-.5 3.5-3 6-5 6s-4.5-2.5-5-6"/>
         </svg>
-        订阅转换器
+        <span data-i18n="app_title">订阅转换器</span>
       </h1>
       <div class="hero-meta">
-        <p class="lead">极简、高效、安全的订阅转换工具。</p>
+        <p class="lead" data-i18n="hero_lead">极简、高效、安全的订阅转换工具。</p>
         <div class="hero-badge-group">
           <span class="badge">VMess</span>
           <span class="badge">VLESS</span>
@@ -54,8 +63,8 @@
       </div>
     </div>
     <div class="hero-info">
-      <div class="eyebrow">💡 说明</div>
-      <p class="tiny-text">支持 IP/域名:端口#备注 格式。留空优选 IP 则仅做纯格式转换。</p>
+      <div class="eyebrow" data-i18n="info_eyebrow">💡 说明</div>
+      <p class="tiny-text" data-i18n="info_text">支持 IP/域名:端口#备注 格式。留空优选 IP 则仅做纯格式转换。</p>
     </div>
   </header>
 
@@ -63,35 +72,35 @@
   <form id="generator-form" class="card main-form" autocomplete="off">
     <!-- 第一行：核心输入 -->
     <div class="form-section primary-input">
-      <label for="nodeLinks">节点链接 <span style="color:var(--danger);">*</span></label>
-      <textarea id="nodeLinks" rows="8" placeholder="粘贴 vmess:// / vless:// / trojan:// / tuic:// / hy2:// 链接，每行一个；也支持 Base64 编码内容" required></textarea>
-      <p class="hint">支持多行粘贴，会自动识别协议。转换结果 7 天后自动失效。</p>
+      <label for="nodeLinks"><span data-i18n="label_node_links">节点链接</span> <span style="color:var(--danger);">*</span></label>
+      <textarea id="nodeLinks" rows="8" data-i18n-placeholder="placeholder_node_links" placeholder="粘贴 vmess:// / vless:// / trojan:// / tuic:// / hy2:// 链接，每行一个；也支持 Base64 编码内容" required></textarea>
+      <p class="hint" data-i18n="hint_node_links">支持多行粘贴，会自动识别协议。转换结果 7 天后自动失效。</p>
     </div>
-
+ 
     <!-- 第二行：增强配置 -->
     <div class="form-section secondary-options grid two-col-75-25">
       <div class="main-col">
-        <label for="preferredIps">优选 IP <span style="color:var(--muted);font-weight:400;">(可选)</span></label>
-        <textarea id="preferredIps" rows="5" placeholder="每行一个 IP/域名，例如: 104.16.1.2#美国 或者 cdn.example.com"></textarea>
+        <label for="preferredIps"><span data-i18n="label_preferred_ips">优选 IP</span> <span style="color:var(--muted);font-weight:400;" data-i18n="label_optional">(可选)</span></label>
+        <textarea id="preferredIps" rows="5" data-i18n-placeholder="placeholder_preferred_ips" placeholder="每行一个 IP/域名，例如: 104.16.1.2#美国 或者 cdn.example.com"></textarea>
       </div>
       <div class="side-col">
         <div>
-          <label for="namePrefix">节点名称前缀 <span style="color:var(--muted);font-weight:400;">(可选)</span></label>
-          <input type="text" id="namePrefix" placeholder="例如：CF、HK">
+          <label for="namePrefix"><span data-i18n="label_name_prefix">节点名称前缀</span> <span style="color:var(--muted);font-weight:400;" data-i18n="label_optional">(可选)</span></label>
+          <input type="text" id="namePrefix" data-i18n-placeholder="placeholder_name_prefix" placeholder="例如：CF、HK">
         </div>
         <div class="checkbox-group">
           <div class="checkbox-wrap">
             <input type="checkbox" id="keepOriginalHost" checked>
-            <label for="keepOriginalHost">保留原 Host/SNI</label>
+            <label for="keepOriginalHost" data-i18n="label_keep_host">保留原 Host/SNI</label>
           </div>
-          <p class="tiny-text" style="margin-top:6px;">建议保留，更适合CDN场景</p>
+          <p class="tiny-text" style="margin-top:6px;" data-i18n="hint_keep_host">建议保留，更适合CDN场景</p>
         </div>
       </div>
     </div>
-
+ 
     <div class="form-actions">
-      <button type="submit" id="submitBtn">🚀 立即生成订阅链接</button>
-      <button type="button" id="fillDemoBtn" class="secondary">📋 填充示例</button>
+      <button type="submit" id="submitBtn" data-i18n="btn_generate">🚀 立即生成订阅链接</button>
+      <button type="button" id="fillDemoBtn" class="secondary" data-i18n="btn_demo">📋 填充示例</button>
     </div>
   </form>
 
@@ -99,51 +108,48 @@
   <section id="resultSection" class="card hidden" aria-label="订阅结果">
     <div class="section-head">
       <div>
-        <h2 style="margin:0;">📦 订阅结果</h2>
-        <p class="section-desc">选择适合你的客户端格式，复制订阅链接或扫码导入。</p>
+        <h2 style="margin:0;" data-i18n="result_title">📦 订阅结果</h2>
+        <p class="section-desc" data-i18n="result_desc">选择适合你的客户端格式，复制订阅链接或扫码导入。</p>
       </div>
       <div class="counts">
-        <div class="stat-item"><strong id="statInputNodes" class="stat-num">0</strong><span class="stat-label">输入节点</span></div>
-        <div class="stat-item"><strong id="statEndpoints" class="stat-num">0</strong><span class="stat-label">优选地址</span></div>
-        <div class="stat-item"><strong id="statOutputNodes" class="stat-num">0</strong><span class="stat-label">输出节点</span></div>
+        <div class="stat-item"><strong id="statInputNodes" class="stat-num">0</strong><span class="stat-label" data-i18n="stat_input">输入节点</span></div>
+        <div class="stat-item"><strong id="statEndpoints" class="stat-num">0</strong><span class="stat-label" data-i18n="stat_endpoints">优选地址</span></div>
+        <div class="stat-item"><strong id="statOutputNodes" class="stat-num">0</strong><span class="stat-label" data-i18n="stat_output">输出节点</span></div>
       </div>
     </div>
-
+ 
     <!-- 警告 -->
     <div id="warningBox" class="warning hidden" role="alert"></div>
-
+ 
     <!-- 订阅卡片网格 -->
     <div class="sub-grid" style="margin-top:20px;">
-
+ 
       <!-- 自动识别 -->
       <div class="sub-card">
         <div class="sub-card-head">
           <div class="client-meta">
-            <div class="client-icon" style="background:rgba(96,165,250,.15);">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+            <div class="client-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m16 12-4-4-4 4M12 8v8"/></svg>
             </div>
             <div class="client-info">
-              <h3>自动识别</h3>
-              <p>适合支持自动识别的客户端</p>
+              <h3 data-i18n="client_auto">自动识别</h3>
+              <p data-i18n="client_auto_desc">适合支持自动识别的客户端</p>
             </div>
           </div>
         </div>
         <div class="sub-actions">
-          <input type="text" id="autoUrl" readonly placeholder="等待生成...">
-          <button class="small" data-copy-target="autoUrl">复制</button>
-          <button class="small secondary" data-qrcode-target="autoUrl">二维码</button>
+          <input type="text" id="autoUrl" readonly data-i18n-placeholder="placeholder_waiting" placeholder="等待生成...">
+          <button class="small" data-copy-target="autoUrl" data-i18n="btn_copy">复制</button>
+          <button class="small secondary" data-qrcode-target="autoUrl" data-i18n="btn_qrcode">二维码</button>
         </div>
       </div>
-
+ 
       <!-- V2rayN / Raw -->
       <div class="sub-card">
         <div class="sub-card-head">
           <div class="client-meta">
-            <div class="client-icon icon-v2rayn">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>
-                <path d="M7 8l5 5 5-5" opacity="0.5"/>
-              </svg>
+            <div class="client-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="3" rx="2"/><line x1="8" x2="16" y1="21" y2="21"/><line x1="12" x2="12" y1="17" y2="21"/></svg>
             </div>
             <div class="client-info">
               <h3>V2rayN</h3>
@@ -152,21 +158,18 @@
           </div>
         </div>
         <div class="sub-actions">
-          <input type="text" id="rawUrl" readonly placeholder="等待生成...">
-          <button class="small" data-copy-target="rawUrl">复制</button>
-          <button class="small secondary" data-qrcode-target="rawUrl">二维码</button>
+          <input type="text" id="rawUrl" readonly data-i18n-placeholder="placeholder_waiting" placeholder="等待生成...">
+          <button class="small" data-copy-target="rawUrl" data-i18n="btn_copy">复制</button>
+          <button class="small secondary" data-qrcode-target="rawUrl" data-i18n="btn_qrcode">二维码</button>
         </div>
       </div>
-
+ 
       <!-- Clash -->
       <div class="sub-card">
         <div class="sub-card-head">
           <div class="client-meta">
-            <div class="client-icon icon-clash">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/>
-                <circle cx="12" cy="12" r="3" fill="currentColor" fill-opacity="0.2"/>
-              </svg>
+            <div class="client-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/><path d="M3 12c0 1.66 4 3 9 3s9-1.34 9-3"/></svg>
             </div>
             <div class="client-info">
               <h3>Clash</h3>
@@ -175,40 +178,51 @@
           </div>
         </div>
         <div class="sub-actions">
-          <input type="text" id="clashUrl" readonly placeholder="等待生成...">
-          <button class="small" data-copy-target="clashUrl">复制</button>
-          <button class="small secondary" data-qrcode-target="clashUrl">二维码</button>
+          <input type="text" id="clashUrl" readonly data-i18n-placeholder="placeholder_waiting" placeholder="等待生成...">
+          <button class="small" data-copy-target="clashUrl" data-i18n="btn_copy">复制</button>
+          <button class="small secondary" data-qrcode-target="clashUrl" data-i18n="btn_qrcode">二维码</button>
         </div>
       </div>
-
+ 
       <!-- Shadowrocket -->
       <div class="sub-card">
         <div class="sub-card-head">
           <div class="client-meta">
-            <div class="client-icon icon-rocket">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/><path d="M9 12H4s.55-3.03 2-4.5c1.62-1.63 5-2.5 5-2.5"/><path d="M15 9V4s-3.03.55-4.5 2c-1.63 1.62-2.5 5-2.5 5"/>
-              </svg>
+            <div class="client-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/><path d="M9 12H4s.55-3.03 2-4.5c1.62-1.63 5-2.5 5-2.5"/><path d="M15 9V4s-3.03.55-4.5 2c-1.63 1.62-2.5 5-2.5 5"/></svg>
             </div>
             <div class="client-info">
               <h3>Shadowrocket</h3>
-              <p>iPhone / iPad 小火箭</p>
+              <p data-i18n="client_rocket_desc">iPhone / iPad 小火箭</p>
             </div>
           </div>
         </div>
         <div class="sub-actions">
-          <input type="text" id="rocketUrl" readonly placeholder="等待生成...">
-          <button class="small" data-copy-target="rocketUrl">复制</button>
-          <button class="small secondary" data-qrcode-target="rocketUrl">二维码</button>
+          <input type="text" id="rocketUrl" readonly data-i18n-placeholder="placeholder_waiting" placeholder="等待生成...">
+          <button class="small" data-copy-target="rocketUrl" data-i18n="btn_copy">复制</button>
+          <button class="small secondary" data-qrcode-target="rocketUrl" data-i18n="btn_qrcode">二维码</button>
         </div>
       </div>
-
+ 
       <!-- Surge -->
       <div class="sub-card sub-card-wide">
         <div class="sub-card-head">
           <div class="client-meta">
-            <div class="client-icon icon-surge">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <div class="client-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+            </div>
+            <div class="client-info">
+              <h3>Surge</h3>
+              <p>Surge Profile（VMess / Trojan）</p>
+            </div>
+          </div>
+        </div>
+        <div class="sub-actions">
+          <input type="text" id="surgeUrl" readonly data-i18n-placeholder="placeholder_waiting" placeholder="等待生成...">
+          <button class="small" data-copy-target="surgeUrl" data-i18n="btn_copy">复制</button>
+          <button class="small secondary" data-qrcode-target="surgeUrl" data-i18n="btn_qrcode">二维码</button>
+        </div>
+      </div>or" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" fill="currentColor" fill-opacity="0.2"/>
               </svg>
             </div>
@@ -219,22 +233,22 @@
           </div>
         </div>
         <div class="sub-actions">
-          <input type="text" id="surgeUrl" readonly placeholder="等待生成...">
-          <button class="small" data-copy-target="surgeUrl">复制</button>
-          <button class="small secondary" data-qrcode-target="surgeUrl">二维码</button>
+          <input type="text" id="surgeUrl" readonly data-i18n-placeholder="placeholder_waiting" placeholder="等待生成...">
+          <button class="small" data-copy-target="surgeUrl" data-i18n="btn_copy">复制</button>
+          <button class="small secondary" data-qrcode-target="surgeUrl" data-i18n="btn_qrcode">二维码</button>
         </div>
       </div>
-
+ 
     </div>
-
+ 
     <!-- 预览 -->
     <div class="preview-wrap" style="margin-top:20px;">
-      <h3>📋 预览前 20 个生成节点</h3>
+      <h3 data-i18n="preview_title">📋 预览前 20 个生成节点</h3>
       <div class="table-wrap">
         <table>
           <thead>
             <tr>
-              <th>名称</th><th>协议</th><th>服务器</th><th>端口</th><th>Host</th><th>SNI</th>
+              <th data-i18n="th_name">名称</th><th data-i18n="th_protocol">协议</th><th data-i18n="th_server">服务器</th><th data-i18n="th_port">端口</th><th>Host</th><th>SNI</th>
             </tr>
           </thead>
           <tbody id="previewBody"></tbody>
@@ -242,14 +256,14 @@
       </div>
     </div>
   </section>
-
+ 
   <!-- ── 底部广告占位 ── -->
   <!-- AD_PLACEHOLDER_BOTTOM -->
-
+ 
   <!-- ── Footer ── -->
   <footer style="text-align:center;padding:32px 0 16px;color:var(--muted);font-size:0.88rem;">
-    <p>CF-Sub — 基于 <a href="https://workers.cloudflare.com" target="_blank" style="color:var(--accent);">Cloudflare Workers</a> 构建</p>
-    <p style="margin-top:6px;opacity:.6;">开源项目 · 仅供学习交流</p>
+    <p><span data-i18n="footer_text">CF-Sub — 基于</span> <a href="https://workers.cloudflare.com" target="_blank" style="color:var(--accent);">Cloudflare Workers</a> <span data-i18n="footer_build">构建</span></p>
+    <p style="margin-top:6px;opacity:.6;" data-i18n="footer_note">开源项目 · 仅供学习交流</p>
   </footer>
 
 </div>
